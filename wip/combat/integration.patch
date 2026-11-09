@@ -1,0 +1,176 @@
+--- a/payload/samp.h
++++ b/payload/samp.h
+@@ -7,7 +7,10 @@
+     float vel[3];
+     unsigned char health, armour, weapon, special;
+     unsigned short keys, lr, ud;
++    unsigned short anim_id, anim_flags;
++    unsigned char hold; /* wasted or spectating: the server must not see a foot sync */
+ } samp_local_t;
++#define SAMP_LOCAL_HAS_COMBAT 1
+ 
+ enum { SAMP_OFFLINE, SAMP_CONNECTING, SAMP_JOINING, SAMP_CLASS, SAMP_SPAWNING, SAMP_SPAWNED, SAMP_ERROR };
+ 
+--- a/payload/samp.c
++++ b/payload/samp.c
+@@ -155,9 +155,11 @@
+         return;
+     }
+     samp_stats.sync_in++;
+-    if (id == ID_FOOT_SYNC)
++    if (id == ID_FOOT_SYNC) {
++        bs_t copy = b;
+         on_foot_sync(&b);
+-    else if (id >= 200)
++        samp_sync_dispatch(id, &copy);
++    } else if (id >= 200)
+         samp_sync_dispatch(id, &b);
+ }
+ 
+@@ -373,6 +375,8 @@
+     int i;
+ 
+     samp_plat_local(&l);
++    if (l.hold)
++        return;
+     bs_wr_init(&b, buf, sizeof buf);
+     bs_w8(&b, ID_FOOT_SYNC);
+     bs_w16(&b, l.lr);
+@@ -387,8 +391,8 @@
+     for (i = 0; i < 3; i++) bs_wf(&b, l.vel[i]);
+     for (i = 0; i < 3; i++) bs_wf(&b, 0.0f); /* surf offset */
+     bs_w16(&b, 0); /* surf id */
+-    bs_w16(&b, 0); /* animation id */
+-    bs_w16(&b, 0); /* animation flags */
++    bs_w16(&b, l.anim_id);
++    bs_w16(&b, l.anim_flags);
+     if (rak_send(buf, b.bits, RAK_UNRELIABLE_SEQ, 0) == 0)
+         samp_stats.sync_out++;
+ }
+--- a/payload/game.c
++++ b/payload/game.c
+@@ -2,11 +2,12 @@
+ #include "game.h"
+ #include "scm.h"
+ #include "util.h"
++#include "feat_combat.h"
+ 
+ #define PLAYERS        0x00709650u /* CWorld::Players, stride 0x1BC, ped at +0 */
+ 
+ #define PED_MATRIX     0x014
+-#define PED_MOVE_SPEED 0x040
++#define PED_MOVE_SPEED 0x044 /* 0x40 is the physical flags: see SET_CHAR_VELOCITY, 0x5047DC */
+ #define PED_HEALTH     0x580
+ #define PED_ARMOUR     0x588
+ 
+@@ -157,12 +158,13 @@
+     a = *(float *)(ped + PED_ARMOUR);
+     l->health = h < 0.0f ? 0 : h > 255.0f ? 255 : (unsigned char)h;
+     l->armour = a < 0.0f ? 0 : a > 255.0f ? 255 : (unsigned char)a;
++    feat_combat_local(l);
+ }
+ 
+ /* ---- remote players -------------------------------------------------- */
+ 
+ typedef struct {
+-    int used, id, handle, moving;
++    int used, id, handle, moving, skin;
+     float x, y, z, heading;
+     float tx, ty, tz;
+ } remote_t;
+@@ -204,6 +206,7 @@
+     if (!r)
+         return;
+     /* Model 0 is the special player model and cannot be created as a normal ped. */
++    skin = feat_combat_safe_skin(skin);
+     if (skin == 0)
+         skin = 7;
+     scm_begin(&s);
+@@ -216,6 +219,7 @@
+     r->used = 1;
+     r->id = id;
+     r->handle = scm_get_local(L_TMP);
++    r->skin = skin;
+     r->moving = 0;
+     r->x = r->tx = p[0];
+     r->y = r->ty = p[1];
+@@ -284,10 +288,24 @@
+     int i;
+     for (i = 0; i < MAX_REMOTE; i++) {
+         remote_t *r = &remotes[i];
+-        float dx, dy, dz, d2;
++        float dx, dy, dz, d2, pos[3];
+         scm_t s;
++        int gate;
+         if (!r->used)
+             continue;
++        gate = feat_combat_remote_gate(r->id, r->handle);
++        if (gate == COMBAT_REMOTE_SKIP)
++            continue;
++        if (gate == COMBAT_REMOTE_LOST) {
++            /* The game took the ped or killed it. Never send a stale handle to a script
++             * command: the opcodes use the null ped without checking. DELETE_CHAR is the
++             * exception, and it clears a body that is still there. */
++            unsigned id = r->id, skin = r->skin;
++            pos[0] = r->tx; pos[1] = r->ty; pos[2] = r->tz;
++            game_remote_del(id);
++            game_remote_add(id, skin, pos, r->heading);
++            continue;
++        }
+         dx = r->tx - r->x; dy = r->ty - r->y; dz = r->tz - r->z;
+         d2 = dx * dx + dy * dy + dz * dz;
+         scm_set_local(L_TMP, r->handle);
+@@ -296,11 +314,13 @@
+             scm_op(&s, OP_SET_CHAR_COORDS); scm_local(&s, L_TMP);
+             scm_f(&s, r->tx); scm_f(&s, r->ty); scm_f(&s, r->tz);
+             r->x = r->tx; r->y = r->ty; r->z = r->tz;
++        } else if (gate == COMBAT_REMOTE_HOLD) {
++            /* Combat has it aiming or in an animation: a walk task would cancel that. */
+         } else if (d2 > STOP_DIST2) {
+             /* The game's own walk task, so the ped animates instead of sliding. */
+             scm_op(&s, OP_GO_STRAIGHT); scm_local(&s, L_TMP);
+             scm_f(&s, r->tx); scm_f(&s, r->ty); scm_f(&s, r->tz);
+-            scm_i8(&s, d2 > 9.0f ? MOVE_RUN : MOVE_WALK); scm_i32(&s, 2000);
++            scm_i8(&s, feat_combat_remote_move(r->id, d2 > 9.0f ? MOVE_RUN : MOVE_WALK)); scm_i32(&s, 2000);
+             r->x = r->tx; r->y = r->ty; r->z = r->tz;
+         } else if (!r->moving) {
+             scm_op(&s, OP_SET_CHAR_HEADING); scm_local(&s, L_TMP); scm_f(&s, r->heading);
+--- a/payload/main.c
++++ b/payload/main.c
+@@ -11,6 +11,7 @@
+ #include "browser.h"
+ #include "browser_ee.h"
+ #include "ui_game.h"
++#include "feat_combat.h"
+ 
+ #define LOCAL_PORT  50000
+ #define COUNT_PER_MS 294912u /* EE core clock */
+@@ -46,7 +47,7 @@
+ void samp_plat_player_del(unsigned id) { game_remote_del(id); }
+ void samp_plat_player_sync(unsigned id, const float *p, const float *q, unsigned keys, int moving) { game_remote_sync(id, p, q, moving); }
+ void samp_plat_set_pos(const float *p) { game_teleport(p[0], p[1], p[2]); }
+-void samp_plat_set_skin(unsigned skin) { game_set_skin(skin); }
++void samp_plat_set_skin(unsigned skin) { game_set_skin(feat_combat_safe_skin(skin)); }
+ void samp_plat_message(const char *t) { ui_chat_add(t); }
+ 
+ /* A failed or lost connection must never leave the player without a way back. */
+@@ -128,7 +129,7 @@
+     }
+     if (samp_state() == SAMP_SPAWNED && !teleported && game_has_player()) {
+         teleported = 1;
+-        game_set_skin(samp_stats.skin);
++        game_set_skin(feat_combat_safe_skin(samp_stats.skin));
+         game_teleport(samp_stats.spawn[0], samp_stats.spawn[1], samp_stats.spawn[2]);
+         slog("game: spawned, skin %d", samp_stats.skin);
+         ui_status("");
+--- a/payload/feat.c
++++ b/payload/feat.c
+@@ -3,7 +3,7 @@
+ /* A stream is switched on once it has been merged and run in the game. Until then
+  * its code is built but stays idle, so a crash can be traced to what's actually new. */
+ #define FEAT_VEHICLE 0
+-#define FEAT_COMBAT  0
++#define FEAT_COMBAT  1
+ #define FEAT_WORLD   0
+ 
+ static samp_rpc_handlers_t handlers;

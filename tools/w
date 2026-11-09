@@ -1,0 +1,5 @@
+#!/bin/bash
+# From Git Bash on Windows, run a project script inside WSL:  tools/w tools/build.sh
+# WSL_DISTRO picks the distribution (default Ubuntu).
+ROOT=$(cd "$(dirname "$0")/.." && pwd)
+MSYS_NO_PATHCONV=1 exec wsl -d "${WSL_DISTRO:-Ubuntu}" --cd "$(cygpath -w "$ROOT")" -- bash "$@"

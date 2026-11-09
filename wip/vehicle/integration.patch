@@ -1,0 +1,175 @@
+--- a/payload/samp.c
++++ b/payload/samp.c
+@@ -396,7 +396,8 @@
+ void samp_tick(unsigned now)
+ {
+     rak_tick(now);
+-    if (state == SAMP_SPAWNED && rak_state() == RAK_CONNECTED && now - last_sync >= SYNC_MS) {
++    if (state == SAMP_SPAWNED && rak_state() == RAK_CONNECTED && now - last_sync >= SYNC_MS &&
++        !samp_plat_in_vehicle()) {
+         last_sync = now;
+         send_foot_sync();
+     }
+--- a/payload/samp.h
++++ b/payload/samp.h
+@@ -14,6 +14,7 @@
+ /* Provided by the platform. */
+ void samp_plat_send(const unsigned char *data, unsigned len);
+ void samp_plat_local(samp_local_t *out);
++int  samp_plat_in_vehicle(void); /* true while vehicle sync replaces foot sync */
+ void samp_plat_player_add(unsigned id, unsigned skin, const float *pos, float angle);
+ void samp_plat_player_del(unsigned id);
+ void samp_plat_player_sync(unsigned id, const float *pos, const float *quat, unsigned keys, int moving);
+--- a/payload/main.c
++++ b/payload/main.c
+@@ -7,6 +7,7 @@
+ #include "ui.h"
+ #include "menu.h"
+ #include "feat.h"
++#include "feat_vehicle.h"
+ #include "feat_dialog_pad.h"
+ #include "browser.h"
+ #include "browser_ee.h"
+@@ -42,10 +43,19 @@
+ }
+ 
+ void samp_plat_local(samp_local_t *l) { game_read_local(l); }
++int  samp_plat_in_vehicle(void) { return feat_vehicle_in_car(); }
+ void samp_plat_player_add(unsigned id, unsigned skin, const float *p, float a) { game_remote_add(id, skin, p, a); }
+ void samp_plat_player_del(unsigned id) { game_remote_del(id); }
+-void samp_plat_player_sync(unsigned id, const float *p, const float *q, unsigned keys, int moving) { game_remote_sync(id, p, q, moving); }
+-void samp_plat_set_pos(const float *p) { game_teleport(p[0], p[1], p[2]); }
++void samp_plat_player_sync(unsigned id, const float *p, const float *q, unsigned keys, int moving)
++{
++    feat_vehicle_foot_sync(id);
++    game_remote_sync(id, p, q, moving);
++}
++void samp_plat_set_pos(const float *p)
++{
++    feat_vehicle_eject(p);
++    game_teleport(p[0], p[1], p[2]);
++}
+ void samp_plat_set_skin(unsigned skin) { game_set_skin(skin); }
+ void samp_plat_message(const char *t) { ui_chat_add(t); }
+ 
+@@ -61,6 +71,7 @@
+         msg[n++] = *why++;
+     msg[n] = 0;
+     started = 0;
++    feat_vehicle_reset();
+     game_remote_clear();
+     ui_status("");
+     menu_set_status(msg);
+@@ -82,6 +93,7 @@
+     server_port = port;
+     started = 1;
+     teleported = 0;
++    feat_vehicle_reset();
+     game_remote_clear();
+     slog("connecting as %s", name);
+     ui_status("Connecting...");
+@@ -92,6 +104,7 @@
+ void menu_do_disconnect(void)
+ {
+     samp_disconnect();
++    feat_vehicle_reset();
+     game_remote_clear();
+     started = 0;
+ }
+--- a/payload/game.c
++++ b/payload/game.c
+@@ -6,7 +6,7 @@
+ #define PLAYERS        0x00709650u /* CWorld::Players, stride 0x1BC, ped at +0 */
+ 
+ #define PED_MATRIX     0x014
+-#define PED_MOVE_SPEED 0x040
++#define PED_MOVE_SPEED 0x044 /* 083C SET_CHAR_VELOCITY writes +0x44 */
+ #define PED_HEALTH     0x580
+ #define PED_ARMOUR     0x588
+ 
+@@ -127,9 +127,9 @@
+     q[1] = x > 0.0f ? fsqrt(x) * 0.5f : 0.0f;
+     q[2] = y > 0.0f ? fsqrt(y) * 0.5f : 0.0f;
+     q[3] = z > 0.0f ? fsqrt(z) * 0.5f : 0.0f;
+-    if (uz - ay < 0.0f) q[1] = -q[1];
+-    if (ax - rz < 0.0f) q[2] = -q[2];
+-    if (ry - ux < 0.0f) q[3] = -q[3];
++    if (ay - uz < 0.0f) q[1] = -q[1];
++    if (rz - ax < 0.0f) q[2] = -q[2];
++    if (ux - ry < 0.0f) q[3] = -q[3];
+ }
+ 
+ void game_read_local(samp_local_t *l)
+@@ -162,7 +162,7 @@
+ /* ---- remote players -------------------------------------------------- */
+ 
+ typedef struct {
+-    int used, id, handle, moving;
++    int used, id, handle, moving, held;
+     float x, y, z, heading;
+     float tx, ty, tz;
+ } remote_t;
+@@ -217,6 +217,7 @@
+     r->id = id;
+     r->handle = scm_get_local(L_TMP);
+     r->moving = 0;
++    r->held = 0;
+     r->x = r->tx = p[0];
+     r->y = r->ty = p[1];
+     r->z = r->tz = p[2];
+@@ -247,8 +248,8 @@
+     r->tx = p[0];
+     r->ty = p[1];
+     r->tz = p[2];
+-    /* forward vector of quaternion (w,x,y,z), then GTA heading in degrees */
+-    fx = 2.0f * (q[1] * q[2] - q[0] * q[3]);
++    /* forward vector of the wire quaternion, which is conjugated, then GTA heading in degrees */
++    fx = 2.0f * (q[1] * q[2] + q[0] * q[3]);
+     fy = 1.0f - 2.0f * (q[1] * q[1] + q[3] * q[3]);
+     r->heading = atan2_deg(-fx, fy);
+     r->moving = moving;
+@@ -271,6 +272,14 @@
+     return r ? r->handle : 0;
+ }
+ 
++/* While on, feat_vehicle.c has the ped: game_remote_update leaves it alone. */
++void game_remote_hold(unsigned id, int on)
++{
++    remote_t *r = find_remote(id);
++    if (r)
++        r->held = on;
++}
++
+ void game_remote_clear(void)
+ {
+     int i;
+@@ -286,7 +295,7 @@
+         remote_t *r = &remotes[i];
+         float dx, dy, dz, d2;
+         scm_t s;
+-        if (!r->used)
++        if (!r->used || r->held)
+             continue;
+         dx = r->tx - r->x; dy = r->ty - r->y; dz = r->tz - r->z;
+         d2 = dx * dx + dy * dy + dz * dz;
+--- a/payload/feat.c
++++ b/payload/feat.c
+@@ -2,7 +2,7 @@
+ 
+ /* A stream is switched on once it has been merged and run in the game. Until then
+  * its code is built but stays idle, so a crash can be traced to what's actually new. */
+-#define FEAT_VEHICLE 0
++#define FEAT_VEHICLE 1
+ #define FEAT_COMBAT  0
+ #define FEAT_WORLD   0
+ 
+--- a/host/hostmain.c
++++ b/host/hostmain.c
+@@ -33,6 +33,7 @@
+     l->pos[0] = px + pace;
+     l->ud = 0xFF80;
+ }
++int samp_plat_in_vehicle(void) { return 0; }
+ void samp_plat_player_add(unsigned id, unsigned skin, const float *p, float a) { printf("stream in %u skin %u at %.1f %.1f %.1f\n", id, skin, p[0], p[1], p[2]); }
+ void samp_plat_player_del(unsigned id) { printf("stream out %u\n", id); }
+ void samp_plat_player_sync(unsigned id, const float *p, const float *q, unsigned k, int m) {}

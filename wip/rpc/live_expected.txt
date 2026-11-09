@@ -1,0 +1,222 @@
+EV player_join 0 FF8C13FF 0 RPCPeer
+EV create_object 2 1338 104.00 206.00 10.00 0.00 0.00 0.00 300.00 0 1 65535 0
+EV create_object 1 1337 103.00 206.00 10.00 1.00 2.00 3.00 300.00 0 65535 65535 2 [tex 1 19341 egg_txd egg_tex FF00FF00] [text 2 90 Arial 24 1 FFFFFFFF FF000000 1 Object text]
+EV init_game id 1 name [rpctest private] rates 30 30 30 hour 12 weather 10 gravity 0.0080 markers 1
+EV set_color 1 C715FFFF
+EV set_team 1 255
+EV request_class_reply 1 255 7 100.00 200.00 10.00 90.00 24 100
+EV request_spawn_reply 1
+EV client_message CBCBCBFF CB state 8 0
+EV set_armed_weapon 0
+EV client_message CBCBCBFF CB state 1 8
+EV vehicle_stream_in 1 411 105.00 200.00 10.00 45.00 6 7 1000.00 0 0 0 0 0 0 0 0 -1 -1
+EV vehicle_stream_in 3 435 130.00 200.00 10.00 0.00 1 1 1000.00 0 0 0 0 0 0 0 0 -1 -1
+EV vehicle_stream_in 2 403 120.00 200.00 10.00 0.00 1 1 1000.00 0 0 0 0 0 0 0 0 -1 -1
+EV actor_stream_in 0 7 102.00 205.00 10.00 30.00 100.00 0
+EV create_pickup 0 1240 2 101.00 203.00 10.00
+EV show_label 0 0 11223344 100.00 201.00 11.00 40.00 1 65535 65535 Global label text
+EV player_stream_in 0 255 7 100.00 200.00 10.00 306.87 FF8C13FF 4 999 999
+EV sync_foot 0 65408 128 1032 100.00 200.00 10.00 q 0.800 0.200 0.400 0.400 77 35 4 1 0 v 0.10 -0.20 -0.00 0 0 0 0
+EV set_player_name 1 RPCRenamed 1
+EV set_health 88.50
+EV set_armour 44.50
+EV toggle_controllable 1
+EV play_sound 1052 1.00 2.00 3.00
+EV set_world_bounds 2000.00 -2000.00 3000.00 -3000.00
+EV give_money 1234
+EV set_facing_angle 123.50
+EV reset_money
+EV reset_weapons
+EV give_weapon 24 50
+EV set_ammo 24 77
+EV set_armed_weapon 24
+EV set_time 7 30
+EV toggle_clock 1
+EV set_shop_name FDPIZA
+EV set_skill_level 1 0 500
+EV set_drunk_level 2500
+EV set_pos_find_z 100.00 200.00 10.00
+EV set_pos 100.00 200.00 10.00
+EV client_message CBCBCBFF CB name RPCRenamed
+EV set_checkpoint 1.00 2.00 3.00 4.50
+EV disable_checkpoint
+EV set_race_checkpoint 1 1.00 2.00 3.00 4.00 5.00 6.00 7.50
+EV disable_race_checkpoint
+EV play_audio_stream http://example.invalid/a.mp3 1.00 2.00 3.00 50.00 1
+EV stop_audio_stream
+EV remove_building 1302 1.00 2.00 3.00 5.50
+EV set_map_icon 3 1.00 2.00 3.00 31 AABBCCDD 1
+EV remove_map_icon 3
+EV set_weather 8
+EV set_world_time 14
+EV set_interior 3
+EV set_interior 0
+EV set_wanted_level 4
+EV create_explosion 1.00 2.00 3.00 6 9.50
+EV play_crime_report 1 0 0 0 16 100.00 200.00 10.00
+EV game_text 3 3000 ~r~hello
+EV toggle_widescreen 1
+EV toggle_widescreen 0
+EV set_gravity 0.0125
+EV set_team 1 5
+EV set_color 1 11223344
+EV set_skin 1 20
+EV set_fighting_style 1 7
+EV set_velocity 0.10 0.20 0.30
+EV set_special_action 5
+EV apply_animation 1 PED WALK_old 4.25 1 0 1 1 500
+EV clear_animations 1
+EV death_message 65535 1 51
+EV chat 1 player chat
+EV enable_stunt_bonus 0
+EV set_camera_pos 1.00 2.00 3.00
+EV set_camera_look_at 4.00 5.00 6.00 1
+EV interpolate_camera 1 1.00 2.00 3.00 4.00 5.00 6.00 1500 2
+EV set_camera_behind
+EV show_nametag 0 0
+EV disable_remote_vehicle_collisions 1
+EV toggle_camera_target 1
+EV set_team 1 3
+EV set_spawn_info 3 22 100.00 200.00 10.00 45.50 24 10 29 20 31 30
+EV client_check 72 00400000 2 4
+EV show_dialog 77 2 [Dialog title] [Buy] [Cancel] [/help - this very same dialog.
+EV show_textdraw 1 0 0 0 1 0.25 0.75 FFE1E1E1 1280.00 1280.00 80808080 2 0 FF000000 1 1 50.00 60.00 0 0.00 0.00 0.00 1.00 -1 -1 player text
+EV set_textdraw_text 1 0 changed
+EV show_textdraw 0 0 1 4 1 0.50 1.50 44332211 640.00 480.00 88776655 2 1 CCBBAA99 5 1 320.00 240.00 411 10.00 20.00 30.00 1.25 3 5 global ~r~text
+EV select_textdraw 1 FF0000FF
+EV show_gangzone 0 1.00 2.00 30.00 40.00 44332211
+EV flash_gangzone 0 88776655
+EV stop_flash_gangzone 0
+EV hide_gangzone 0
+EV init_menu 1 1 [Shop] 200.00 100.00 150.00 75.00 1 1 1 [Item] 2 [Deagle] [Rifle] [Price] 1 [$500]
+EV show_menu 1
+EV show_label 1 0 55667788 1.00 2.00 3.00 25.00 0 65535 65535 Player label
+EV hide_label 1 0
+EV client_message CBCBCBFF CB dialog 77 1 2 Red $3000
+EV client_message CBCBCBFF CB clicktd 0
+EV client_message CBCBCBFF CB clickptd 0
+EV client_message CBCBCBFF CB menurow 1
+EV client_message CBCBCBFF CB menuquit
+EV client_message CBCBCBFF CB text hello chat
+EV client_message CBCBCBFF CB clickmap 1.0 2.0 3.0
+EV enter_vehicle 0 2 0
+EV client_message CBCBCBFF CB clickplayer 0 0
+EV client_message CBCBCBFF CB interior 5 0
+EV client_message CBCBCBFF CB take 65535 5.5 54 3
+EV client_message CBCBCBFF CB give 0 6.5 24 9
+EV client_message CBCBCBFF CB actordmg 0 7.5 24 4
+EV client_message CBCBCBFF CB pickup 0
+EV create_object 3 1339 105.00 206.00 10.00 4.00 5.00 6.00 200.00 0 65535 65535 0
+EV set_object_pos 3 106.00 207.00 11.00
+EV set_object_rot 3 7.00 8.00 9.00
+EV set_object_material 3 tex 3 18646 matcolours white 80332211
+EV set_object_material 3 text 4 60 Courier 18 0 FF112233 FF445566 2 Sign text
+EV move_object 3 106.00 207.00 11.00 110.00 210.00 12.00 2.50 1.00 2.00 3.00
+EV stop_object 3
+EV create_object 3 1339 106.00 207.00 11.00 7.00 8.00 9.00 200.00 0 65535 65535 2 [tex 3 18646 matcolours white 80332211] [text 4 60 Courier 18 0 FF112233 FF445566 2 Sign text]
+EV attach_object_to_player 3 1 0.50 0.25 0.12 1.00 2.00 3.00
+EV attach_camera_to_object 3
+EV set_attached_object 1 2 1 1242 2 0.10 0.20 0.30 10.00 20.00 30.00 1.50 2.50 3.50 11443322 55887766
+EV edit_object 1 3
+EV edit_attached_object 2
+EV begin_object_select
+EV cancel_object_edit
+EV create_pickup 1 1274 2 108.00 209.00 10.00
+EV client_message CBCBCBFF CB ppickup 0
+EV client_message CBCBCBFF CB editobj 1 3 1 1.0 2.0 3.0 4.0 5.0 6.0
+EV client_message CBCBCBFF CB editatt 1 2 1242 2 1.0 2.0 3.0 4.0 5.0 6.0 1.5 2.5 3.5
+EV client_message CBCBCBFF CB selectobj 1 1 1337 7.0 8.0 9.0
+EV link_vehicle_interior 1 2
+EV link_vehicle_interior 1 0
+EV set_vehicle_health 1 750.50
+EV set_vehicle_pos 1 106.00 201.00 10.50
+EV set_vehicle_angle 1 77.50
+EV set_plate 1 PS2SAMP
+EV set_vehicle_params 1 1 0 1 0 1 0 1 255 255 255 255 255 255 255 255 255
+EV set_vehicle_damage 1 17 34 3 4
+EV remove_component 1 1010
+EV scm_event 65535 3 1 3 4
+EV apply_actor_animation 0 PED WALK_old 4.25 1 0 1 1 500
+EV clear_actor_animations 0
+EV set_actor_angle 0 66.50
+EV set_actor_pos 0 102.50 205.50 10.50
+EV set_actor_health 0 55.50
+EV client_message CBCBCBFF CB enter 1 0
+EV put_in_vehicle 1 0
+EV client_message CBCBCBFF CB state 2 1
+EV set_vehicle_velocity 0 0.50 0.25 0.12
+EV client_message CBCBCBFF CB pos 105.0 200.0 10.5 state 2
+EV client_message CBCBCBFF CB vdamage 1 257 514 3 4
+EV client_message CBCBCBFF CB mod 1 1010
+EV scm_event 65535 2 1 1010 0
+EV client_message CBCBCBFF CB paintjob 1 2
+EV scm_event 65535 1 1 2 2
+EV client_message CBCBCBFF CB respray 1 8 9
+EV scm_event 65535 3 1 8 9
+EV attach_trailer 3 1
+EV client_message CBCBCBFF CB trailer 3
+EV detach_trailer 1
+EV client_message CBCBCBFF CB exit 1
+EV remove_from_vehicle
+EV client_message CBCBCBFF CB state 1 2
+EV client_message CBCBCBFF CB unocc 2 0 120.5 200.0 10.0
+EV client_message CBCBCBFF CB enter 2 1
+EV client_message CBCBCBFF CB state 3 1
+EV client_message CBCBCBFF CB state 1 3
+EV client_message CBCBCBFF CB pos 100.0 200.0 10.0 state 1
+EV client_message CBCBCBFF CB shot 24 0 65535 0.0 0.0 0.0
+EV client_message CBCBCBFF CB money 4242 drunk 1500
+EV client_message CBCBCBFF CB weapon slot2 24 300
+EV client_message CBCBCBFF CB target vehicle 1
+EV toggle_spectating 1
+EV client_message CBCBCBFF CB state 9 1
+EV spectate_vehicle 1 2
+EV client_message CBCBCBFF CB pos 111.0 222.0 33.0 state 9
+EV spectate_player 0 3
+EV toggle_spectating 0
+EV set_attached_object 1 2 0 0 0 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 00000000 00000000
+EV destroy_object 3
+EV destroy_pickup 1
+EV destroy_pickup 0
+EV hide_menu 1
+EV hide_textdraw 1 0
+EV select_textdraw 0 00000000
+EV hide_label 0 0
+EV actor_stream_out 0
+EV vehicle_stream_out 3
+EV force_class_selection
+EV client_message CBCBCBFF CB state 1 9
+EV player_stream_out 0
+EV client_message CBCBCBFF CB vehicledeath 1
+EV client_message CBCBCBFF CB vehicledeath all
+EV client_message CBCBCBFF CB state 7 1
+EV client_message CBCBCBFF CB death 65535 54
+EV client_message CBCBCBFF CB state 1 7
+EV player_death 0
+EV game_mode_restart
+EV player_quit 0 1
+EV init_game id 0 name [rpctest private] rates 30 30 30 hour 12 weather 10 gravity 0.0080 markers 1
+EV set_color 0 FF8C13FF
+EV set_team 0 255
+EV player_join 1 C715FFFF 0 RPCTest
+EV player_stream_in 1 255 7 100.00 200.00 10.00 306.87 C715FFFF 4 999 999
+EV sync_foot 1 65408 128 1032 100.00 200.00 10.00 q 0.800 0.200 0.400 0.400 77 35 4 1 0 v 0.10 -0.20 -0.00 0 0 0 0
+EV chat_bubble 1 FF00FF00 30.50 5000 bubble
+EV client_message CBCBCBFF CB text peer chat
+EV client_message CBCBCBFF CB enter 2 0
+EV enter_vehicle 1 1 0
+EV sync_vehicle 1 1 65408 0 8 q 0.800 0.200 0.400 0.400 105.00 200.00 10.50 v 0.30 -0.00 -0.00 876 77 35 24 1 1 0 0 0 0
+EV set_vehicle_damage 1 257 514 3 4
+EV sync_vehicle 1 1 65408 0 8 q 0.800 0.200 0.400 0.400 105.00 200.00 10.50 v 0.30 -0.00 -0.00 876 77 35 24 1 1 0 0 1 3
+EV sync_trailer 1 3 130.00 200.00 10.00 q 1.000 0.000 0.000 0.000
+EV exit_vehicle 1 1
+EV sync_unoccupied 1 2 0 120.50 200.00 10.00 900.00
+EV enter_vehicle 1 2 1
+EV sync_passenger 1 2 1 0 24 0 80 20 0 0 4 120.00 200.00 10.00
+EV sync_aim 1 53 0.00 1.00 0.00 100.00 199.00 11.00 0.25 12 2 127
+EV sync_bullet 1 0 65535 100.00 200.00 10.50 100.00 210.00 10.00 0.00 0.00 0.00 24
+EV vehicle_stream_out 1
+EV vehicle_stream_out 2
+EV player_stream_out 1
+EV player_death 1
+EV client_message CBCBCBFF CB death 65535 53

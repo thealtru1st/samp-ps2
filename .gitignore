@@ -1,0 +1,41 @@
+# Game files, emulator states, build output and local logs: never in the repo.
+# (Builds write payload.bin to private/, and the game disc stays with its owner.)
+private/
+*.iso
+*.p2s
+*.pnach
+*.elf
+*.bin
+*.o
+*.map
+
+# Third-party sources and tools fetched during development.
+ref/
+tools/dl/
+tools/ompsrv-run/
+wip/*/srv/
+
+# Live-session scratch: screenshots and logs show other players' names and chat.
+wip/ingame/
+
+# One-off migration and probe scripts.
+tools/patch_*.py
+tools/m5.py
+tools/m6.py
+tools/rb.sh
+tools/truth.py
+tools/ped.py
+tools/ped2.py
+tools/state.py
+tools/bootwait.py
+tools/wait_hb.py
+
+__pycache__/
+*.pyc
+
+# Restates PCSX2's GPL-3 networking for a host rig that needs ref/pcsx2-src anyway.
+wip/browser/test/rig_smap.cpp
+wip/browser/test/pcsx2shim/
+
+# Captured query replies the browser tests read.
+!wip/browser/fixtures/*.bin
